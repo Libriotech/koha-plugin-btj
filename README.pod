@@ -1,0 +1,65 @@
+=pod
+
+=head1 koha-plugin-btj
+
+Plugin to receive aquisitions data from the Swedish BTJ
+
+=head1 INSTALLATION
+
+=head2 From published package
+
+=head2 From git
+
+Clone the git repo.
+
+  git clone https://github.com/Libriotech/koha-plugin-btj
+
+Step into the repo.
+
+  cd koha-plugin-btj
+
+Run pack.pl through koha-shell. This is necessary for the script to pick up the
+version of the plugin.
+
+  sudo koha-plack -c "perl pack-pl" <instancename>
+
+You should now have a file called F<koha-plugin-btj-x.x.x.kpz> in your current
+working directory. This file kan be uploaded to the Koha plugin system just like
+the file you downloaded above.
+
+=head2 Configure Apache
+
+Add this inside the <VirtualHost *:80> section for the OPAC:
+
+   ScriptAlias /btj.pl "/var/lib/koha/<instancename>/plugins/Koha/Plugin/Se/Libriotech/BTJ/btj.pl"
+   Alias /plugin "/var/lib/koha/<instancename>/plugins"
+   # The stanza below is needed for Apache 2.4+
+   <Directory /var/lib/koha/<instancename>/plugins>
+      Options Indexes FollowSymLinks
+      AllowOverride None
+      Require all granted
+   </Directory>
+
+This assumes you are running Koha from the Debian packages. Replace 
+<instancename> with the actual name of your instance.
+
+=head1 LICENSE
+
+Copyright 2016 Magnus Enger, Libriotech <magnus@libriotech.no>
+
+This file is part of koha-plugin-btj.
+
+koha-plugin-btj is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+koha-plugin-btj is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with koha-plugin-btj; if not, see <http://www.gnu.org/licenses>.
+
+=cut
