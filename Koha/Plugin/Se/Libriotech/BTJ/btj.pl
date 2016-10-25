@@ -17,29 +17,77 @@
 # You should have received a copy of the GNU General Public License
 # along with koha-plugin-btj; if not, see <http://www.gnu.org/licenses>.
 
-use Modern::Perl;
-
-use CGI qw ( -utf8 );
-
 use Koha::Plugins;
+use Koha::Plugin::Se::Libriotech::BTJ;
 use C4::Auth;
 use C4::Output;
 use C4::Debug;
 use C4::Context;
 
+use CGI qw ( -utf8 );
+use Modern::Perl;
+
 my $cgi  = new CGI;
 my $time = time();
+my $btj  = Koha::Plugin::Se::Libriotech::BTJ->new;
 
+# Dump the CGI request to a file for debugging
 open ( my $out_fh, ">>", "/tmp/btj-cgi-$time.txt" ) || die "Can't open test.txt: $!";
 $cgi->save( $out_fh );
 close( $out_fh );
 
-print $cgi->header(
-    {
-        -type     => 'text/html',
-        -charset  => 'UTF-8',
-        -encoding => "UTF-8"
-    }
+# Test URL
+# http://localhost:2201/btj.pl?SupplierCode=BTJ&CustomerNoCustomer=123&Author=Name,+No&Title=Some+title&Isbn=1234567890123&Classification=SAB&PurchaseNote=For+the+staff&ArticleNo=1234&Price=345&Currency=SEK&DeliveryDate=2016-11-11&InfoNote=plastad&NoOfCopies=3&OrderDate=2016-10-10&TitleNo=123456&MarcOrigin=LIBRIS&Department=CPL&LocalShelf=Fiction&LoanPeriod=28&ShelfMarc=SAB+123&AccountV=123&Status=1&OriginData=017c13cd96a3bcf000d9e2e79eecd7d7
+
+my %data = (
+    'suppliercode'   => $cgi->param( 'SupplierCode' ) || '',
+    'customerno'     => $cgi->param( 'CustomerNoCustomer' ) || '',
+    'author'         => $cgi->param( 'Author' ) || '',
+    'title'          => $cgi->param( 'Title' ) || '',
+    'isbn'           => $cgi->param( 'Isbn' ) || '',
+    'classification' => $cgi->param( 'Classification' ) || '',
+    'purchasenote'   => $cgi->param( 'PurchaseNote' ) || '',
+    'articleno'      => $cgi->param( 'ArticleNo' ) || '',
+    'price'          => $cgi->param( 'Price' ) || '',
+    'currency'       => $cgi->param( 'Currency' ) || '',
+    'deliverydate'   => $cgi->param( 'DeliveryDate' ) || '',
+    'infonote'       => $cgi->param( 'InfoNote' ) || '',
+    'noofcopies'     => $cgi->param( 'NoOfCopies' ) || '',
+    'orderdate'      => $cgi->param( 'OrderDate' ) || '',
+    'titleno'        => $cgi->param( 'TitleNo' ) || '',
+    'marcorigin'     => $cgi->param( 'MarcOrigin' ) || '',
+    'department'     => $cgi->param( 'Department' ) || '',
+    'localshelf'     => $cgi->param( 'LocalShelf' ) || '',
+    'loanperiod'     => $cgi->param( 'LoanPeriod' ) || '',
+    'shelfmarc'      => $cgi->param( 'ShelfMarc' ) || '',
+    'accountv'       => $cgi->param( 'AccountV' ) || '',
+    'status'         => $cgi->param( 'Status' ) || '',
+    'origindata'     => $cgi->param( 'OriginData' ) || '',
+    'remote_ip'      => $cgi->remote_addr(),
 );
 
-say $time;
+# Save everything in the database
+my $table = $btj->get_qualified_table_name('requests');
+my $dbh = C4::Context->dbh;
+my $query = "INSERT INTO $table SET ";
+my @values;
+my $counter = 0;
+my $max = scalar keys %data;
+while( my( $key, $value ) = each %data ) {
+    $counter++;
+    $query .= "$key = ?";
+    if ( $counter != $max ) {
+        $query .= ", "
+    } else {
+        $query .= ";"
+    }
+    push @values, $value;
+}
+
+print $cgi->header({
+    -type     => 'text/html',
+    -charset  => 'UTF-8',
+    -encoding => "UTF-8"
+});
+
+say $dbh->do( $query, undef, @values );

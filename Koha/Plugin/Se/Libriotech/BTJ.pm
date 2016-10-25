@@ -26,7 +26,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = "0.0.1";
+our $VERSION = "0.0.2";
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -96,10 +96,11 @@ sub configure {
 sub install() {
     my ( $self, $args ) = @_;
 
-    my $table = $self->get_qualified_table_name('request');
+    my $table = $self->get_qualified_table_name('requests');
 
     return C4::Context->dbh->do( "
         CREATE TABLE $table (
+            request_id  int(32) NOT NULL auto_increment, -- Primary key
             suppliercode char(12) not null, -- SupplierCode: Leverantörens kod, t.ex. ”BTJ” för BTJ. Vi skickar ”BTJ”, ”BTJ-MD” eller ”BTJ-PR” beroende på vad det är för typ av order.
             customerno char(12) not null,   -- CustomerNoCustomer: Vilket kundnummer som lagt ordern, motsvaras av kostnadsställer/filial/avdelning.
             author varchar(255),            -- Author: Artikelns författare (om aktuellt).
@@ -123,7 +124,10 @@ sub install() {
             accountv varchar(255),          -- AccountV: Värde som användaren angav när ordern lades (anslag)
             status int not null default 0,  -- Status: Orderns status (1=Öppen order, 2= levererad, 3= fakturerad, 4=annullerad)
             origindata varchar(255),        -- OriginData: Unikt värde för varje orderrad, om en LINK beställning så kommer den därifrån annars genererar vi ett unikt värde för varje orderrad.
-            added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+            remote_ip char(16),
+            processed tinyint(1) not null default 0,
+            added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+            PRIMARY KEY (request_id)
         ) ENGINE = INNODB;
     " );
 }
@@ -134,7 +138,7 @@ sub install() {
 sub uninstall() {
     my ( $self, $args ) = @_;
 
-    my $table = $self->get_qualified_table_name('request');
+    my $table = $self->get_qualified_table_name('requests');
 
     return C4::Context->dbh->do("DROP TABLE $table");
 }
