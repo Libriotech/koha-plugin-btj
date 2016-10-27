@@ -17,7 +17,14 @@ package Koha::Plugin::Se::Libriotech::BTJ;
 # You should have received a copy of the GNU General Public License
 # along with koha-plugin-btj; if not, see <http://www.gnu.org/licenses>.
 
-## It's good practive to use Modern::Perl
+use C4::Biblio;
+use C4::Items;
+
+use MARC::Record;
+use MARC::File::XML;
+use Catmandu::Importer::SRU;
+use Catmandu::Exporter::MARC;
+use Data::Dumper;
 use Modern::Perl;
 
 ## Required for all plugins
@@ -57,6 +64,7 @@ sub new {
     return $self;
 }
 
+# FIXME Is this needed?
 ## If your tool is complicated enough to needs it's own setting/configuration
 ## you will want to add a 'configure' method to your plugin like so.
 ## Here I am throwing all the logic into the 'configure' method, but it could
@@ -141,6 +149,114 @@ sub uninstall() {
     my $table = $self->get_qualified_table_name('requests');
 
     return C4::Context->dbh->do("DROP TABLE $table");
+}
+
+=head2 process_open_order
+
+=cut
+
+sub process_open_order {
+
+    my ( $self, $req, $config ) = @_;
+
+    return unless $req->{'status'} == 1;
+
+    # Get the record
+    my $record = $self->get_record( $req->{'marcorigin'}, $req->{'titleno'}, $config );
+    unless ( $record ) {
+        say "Something went wrong, we do not have a record for $req->{'marcorigin'} $req->{'titleno'}";
+        return undef;
+    }
+    say Dumper $record if $config->{'debug'};
+
+    # Add record and items to Koha
+    # FIXME Should frameworkcode be configurable?
+    my ( $biblionumber, $biblioitemnumber ) = AddBiblio( $record, '' );
+
+    say "Saved as biblionumber = $biblionumber" if $config->{'verbose'};
+
+    # Add items to the record
+    for ( 1..$req->{'noofcopies'} ) {
+
+        my %item = (
+            'homebranch'    => $req->{'department'},
+            'holdingbranch' => $req->{'department'},
+            'itype'         => $req->{'loanperiod'},
+        );
+        my ($biblionumber, $biblioitemnumber, $itemnumber) = AddItem( \%item, $biblionumber );
+        say "Added item = $itemnumber to biblionumber = $biblionumber" if $config->{'verbose'};
+
+    }
+
+    $self->mark_request_as_processed( $req->{'request_id'} );
+
+}
+
+sub get_record {
+
+    my ( $self, $marcorigin, $titleno, $config ) = @_;
+
+    my $record;
+    if ( $marcorigin eq 'LIBRIS' ) {
+        $record = $self->get_record_from_libris( $titleno, $config );
+    } elsif ( $marcorigin eq 'BURK' ) {
+        # TODO $record = $self->get_record_from_burk( $titleno );
+    } else {
+        $record = undef;
+    }
+
+    return $record;
+
+}
+
+=head2 get_record_from_libris
+
+  my $record = get_record_from_libris( $titlenumber );
+
+Takes: A titlenumber
+
+Returns: A MARC::Record
+
+=cut
+
+sub get_record_from_libris {
+
+    my ( $self, $titleno, $config ) = @_;
+
+    say "Looking for $titleno in LIBRIS" if $config->{'verbose'};
+
+    my $importer = Catmandu::Importer::SRU->new(
+        base => 'http://api.libris.kb.se/sru/libris', # Libris SRU endpoint
+        query => "rec.recordIdentifier=$titleno",
+        recordSchema => 'marcxml',
+        parser => 'marcxml',
+    );
+
+    return undef if $importer->count != 1;
+    $importer->rewind;
+
+    my $marcxml;
+    my $exporter = Catmandu->exporter('MARC', file => \$marcxml, type => "XML" );
+    $exporter->add_many($importer);
+
+    if ( $marcxml ) {
+        # marc:collection is not closed, for some reason
+        $marcxml .= '</marc:collection>';
+        say "Found it" if $config->{'verbose'};
+    }
+
+    return MARC::Record->new_from_xml( $marcxml );
+
+}
+
+sub mark_request_as_processed {
+
+    my ( $self, $request_id ) = @_;
+
+    my $table = $self->get_qualified_table_name('requests');
+
+    return C4::Context->dbh->do( "UPDATE $table SET processed = 1 WHERE request_id = $request_id" );
+
 }
 
 1;

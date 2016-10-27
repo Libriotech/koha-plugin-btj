@@ -4,6 +4,12 @@
 
 Plugin to receive aquisitions data from the Swedish BTJ
 
+=head1 DEPENDENCIES
+
+=head2 Perl modules
+
+  sudo cpan MARC::Record MARC::File::XML Catmandu::Importer::SRU Catmandu::Exporter::MARC
+
 =head1 INSTALLATION
 
 =head2 From published package
