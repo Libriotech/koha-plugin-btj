@@ -37,7 +37,7 @@ $cgi->save( $out_fh );
 close( $out_fh );
 
 # Test URL
-# http://localhost:2201/btj.pl?SupplierCode=BTJ&CustomerNoCustomer=123&Author=Name,+No&Title=Some+title&Isbn=1234567890123&Classification=SAB&PurchaseNote=For+the+staff&ArticleNo=1234&Price=345&Currency=SEK&DeliveryDate=2016-11-11&InfoNote=plastad&NoOfCopies=3&OrderDate=2016-10-10&TitleNo=123456&MarcOrigin=LIBRIS&Department=CPL&LocalShelf=Fiction&LoanPeriod=28&ShelfMarc=SAB+123&AccountV=123&Status=1&OriginData=017c13cd96a3bcf000d9e2e79eecd7d7
+# http://localhost:2201/btj.pl?SupplierCode=BTJ&CustomerNoCustomer=123&Author=Name,+No&Title=Some+title&Isbn=1234567890123&Classification=SAB&PurchaseNote=For+the+staff&ArticleNo=1234&Price=345&Currency=SEK&DeliveryDate=2016-11-11&InfoNote=plastad&NoOfCopies=3&OrderDate=2016-10-10&TitleNo=636970&MarcOrigin=LIBRIS&Department=CPL&LocalShelf=Fiction&LoanPeriod=28&ShelfMarc=SAB+123&AccountV=123&Status=1&OriginData=017c13cd96a3bcf000d9e2e79eecd7d7
 
 my %data = (
     'suppliercode'   => $cgi->param( 'SupplierCode' ) || '',
@@ -83,11 +83,10 @@ while( my( $key, $value ) = each %data ) {
     }
     push @values, $value;
 }
+say $dbh->do( $query, undef, @values );
 
 print $cgi->header({
     -type     => 'text/html',
     -charset  => 'UTF-8',
     -encoding => "UTF-8"
 });
-
-say $dbh->do( $query, undef, @values );
