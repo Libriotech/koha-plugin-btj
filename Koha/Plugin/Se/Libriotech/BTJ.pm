@@ -104,10 +104,11 @@ sub configure {
 sub install() {
     my ( $self, $args ) = @_;
 
-    my $table = $self->get_qualified_table_name('requests');
-
-    return C4::Context->dbh->do( "
-        CREATE TABLE $table (
+    my $requests_table = $self->get_qualified_table_name('requests');
+    my $result;
+    my $end_result = 1;
+    $result = C4::Context->dbh->do( "
+        CREATE TABLE $requests_table (
             request_id  int(32) NOT NULL auto_increment, -- Primary key
             suppliercode char(12) not null, -- SupplierCode: Leverantörens kod, t.ex. ”BTJ” för BTJ. Vi skickar ”BTJ”, ”BTJ-MD” eller ”BTJ-PR” beroende på vad det är för typ av order.
             customerno char(12) not null,   -- CustomerNoCustomer: Vilket kundnummer som lagt ordern, motsvaras av kostnadsställer/filial/avdelning.
@@ -138,6 +139,30 @@ sub install() {
             PRIMARY KEY (request_id)
         ) ENGINE = INNODB;
     " );
+    $end_result = 0 unless $result;
+
+    my $orders_table = $self->get_qualified_table_name('orders');
+    $result = C4::Context->dbh->do( "
+        CREATE TABLE $orders_table (
+            order_id  int(32) NOT NULL auto_increment, -- Primary key
+            author varchar(255),            -- Author: Artikelns författare (om aktuellt).
+            title varchar(255),             -- Title: Artikelns titel.
+            deliverydate char(32),          -- DeliveryDate: Uppskattat skeppningsdatum.
+            orderdate char(32),             -- OrderDate: Orderdatum
+            titleno char(32) not null,      -- TitleNo: BurkNummer eller Librisnummer beroende på inställning.
+            marcorigin char(12) not null,   -- MarcOrigin: Om BurkNummer (”BTJ”)eller Librisnummer (”LIBRIS”)
+            department varchar(255),        -- Department: Värde som användaren angav när ordern lades (avdelning)
+            status int not null default 0,  -- Status: Orderns status (1=Öppen order, 2= levererad, 3= fakturerad, 4=annullerad)
+            origindata varchar(255),        -- OriginData: Unikt värde för varje orderrad, om en LINK beställning så kommer den därifrån annars genererar vi ett unikt värde för varje orderrad.
+            biblionumber int(11) not null,  -- A link to the biblio and biblioitems table, as well as for finding items in the items table
+            added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (order_id)
+        ) ENGINE = INNODB;
+    " );
+    $end_result = 0 unless $result;
+
+    return $end_result;
+
 }
 
 ## This method will be run just before the plugin files are deleted
@@ -146,9 +171,12 @@ sub install() {
 sub uninstall() {
     my ( $self, $args ) = @_;
 
-    my $table = $self->get_qualified_table_name('requests');
+    my $requests_table = $self->get_qualified_table_name('requests');
+    C4::Context->dbh->do("DROP TABLE $requests_table");
 
-    return C4::Context->dbh->do("DROP TABLE $table");
+    my $orders_table = $self->get_qualified_table_name('orders');
+    C4::Context->dbh->do("DROP TABLE $orders_table");
+
 }
 
 =head2 process_open_order
@@ -179,14 +207,45 @@ sub process_open_order {
     for ( 1..$req->{'noofcopies'} ) {
 
         my %item = (
-            'homebranch'    => $req->{'department'},
-            'holdingbranch' => $req->{'department'},
-            'itype'         => $req->{'loanperiod'},
+            'homebranch'     => $req->{'department'},
+            'holdingbranch'  => $config->{'on_order_branch'},
+            'itype'          => $config->{'on_order_itemtype'},
+            'itemcallnumber' => $req->{'shelfmarc'}, # classification??
+            'itemnotes'      => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
+            'notforloan'     => -1, # Ordered
         );
         my ($biblionumber, $biblioitemnumber, $itemnumber) = AddItem( \%item, $biblionumber );
         say "Added item = $itemnumber to biblionumber = $biblionumber" if $config->{'verbose'};
 
     }
+
+    # Record this as a new order in the 'orders' table
+    my $orders_table = $self->get_qualified_table_name('orders');
+    my $dbh = C4::Context->dbh;
+    my $query = "INSERT INTO $orders_table SET
+        author = ?,
+        title = ?,
+        deliverydate = ?,
+        orderdate = ?,
+        titleno = ?,
+        marcorigin = ?,
+        department = ?,
+        status = ?,
+        origindata = ?,
+        biblionumber = ?";
+    my @values = (
+        $req->{'author'},
+        $req->{'title'},
+        $req->{'deliverydate'},
+        $req->{'orderdate'},
+        $req->{'titleno'},
+        $req->{'marcorigin'},
+        $req->{'department'},
+        $req->{'status'},
+        $req->{'origindata'},
+        $biblionumber,
+    );
+    say $dbh->do( $query, undef, @values );
 
     $self->mark_request_as_processed( $req->{'request_id'} );
 
@@ -211,7 +270,7 @@ sub get_record {
 
 =head2 get_record_from_libris
 
-  my $record = get_record_from_libris( $titlenumber );
+  my $record = get_record_from_libris( $titlenumber, $config );
 
 Takes: A titlenumber
 
@@ -232,16 +291,13 @@ sub get_record_from_libris {
         parser => 'marcxml',
     );
 
-    return undef if $importer->count != 1;
-    $importer->rewind;
-
     my $marcxml;
     my $exporter = Catmandu->exporter('MARC', file => \$marcxml, type => "XML" );
     $exporter->add_many($importer);
 
     if ( $marcxml ) {
-        # marc:collection is not closed, for some reason
-        $marcxml .= '</marc:collection>';
+       # marc:collection is not closed, for some reason
+       $marcxml .= '</marc:collection>';
         say "Found it" if $config->{'verbose'};
     }
 
