@@ -65,6 +65,7 @@ while ( my $row = $sth->fetchrow_hashref() ) {
     } elsif ( $row->{'status'} == 4 ) {
 
         # Cancelled (Swedish: "annullerad")
+        $btj->process_cancelled_order( $row, $config );
 
     } else {
         say "We have a request with an illegal status ($row->{'status'})";

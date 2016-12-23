@@ -191,6 +191,8 @@ sub process_open_order {
 
     return unless $req->{'status'} == 1;
 
+    my $dbh = C4::Context->dbh;
+
     # Get the record
     my $record = $self->get_record( $req->{'marcorigin'}, $req->{'titleno'}, $config );
     unless ( $record ) {
@@ -224,7 +226,6 @@ sub process_open_order {
 
     # Record this as a new order in the 'orders' table
     my $orders_table = $self->get_qualified_table_name('orders');
-    my $dbh = C4::Context->dbh;
     my $query = "INSERT INTO $orders_table SET
         author = ?,
         title = ?,
@@ -264,14 +265,8 @@ sub process_delivered_order {
 
     my ( $self, $req, $config ) = @_;
 
-    my $dbh = C4::Context->dbh;
-
     # Find the order
-    my $orders_table = $self->get_qualified_table_name('orders');
-    my $query = "SELECT * FROM $orders_table WHERE origindata = '$req->{'origindata'}';";
-    my $sth = $dbh->prepare($query);
-    $sth->execute();
-    my $order = $sth->fetchrow_hashref();
+    my $order = $self->get_order( $req->{'origindata'} );
     say "Order: $req->{'origindata'}, order_id: $order->{'order_id'}, biblionumber: $order->{'biblionumber'}" if $config->{'verbose'};
 
     # Find the items and update them
@@ -283,6 +278,9 @@ sub process_delivered_order {
 
     }
 
+    # Update the order with info from the request
+    $self->update_order_from_request( $order->{'order_id'}, $req );
+
     # Update the order, 2 means "delivered"
     $self->update_order_status( $order->{'order_id'}, 2 );
 
@@ -290,6 +288,44 @@ sub process_delivered_order {
     $self->mark_request_as_processed( $req->{'request_id'} );
 
 }
+
+=head2 process_cancelled_order
+
+Status = 4
+
+=cut
+
+sub process_cancelled_order {
+
+    my ( $self, $req, $config ) = @_;
+
+    # Find the order
+    my $order = $self->get_order( $req->{'origindata'} );
+    say "Order: $req->{'origindata'}, order_id: $order->{'order_id'}, biblionumber: $order->{'biblionumber'}" if $config->{'verbose'};
+
+    # Find the items and update them
+    my @items = GetItemsInfo( $order->{'biblionumber'} );
+    foreach my $item ( @items ) {
+
+        ModItem( { location => '', notforloan => $config->{'not_loan_cancelled'} }, $order->{'biblionumber'}, $item->{'itemnumber'} );
+        say "Itemnumber $item->{'itemnumber'} was updated";
+
+    }
+
+    # Update the order with info from the request
+    $self->update_order_from_request( $order->{'order_id'}, $req );
+
+    # Update the order status, 4 means "cancelled"
+    $self->update_order_status( $order->{'order_id'}, 4 );
+
+    # Mark the request as done
+    $self->mark_request_as_processed( $req->{'request_id'} );
+
+}
+
+=head2 get_record
+
+=cut
 
 sub get_record {
 
@@ -305,6 +341,56 @@ sub get_record {
     }
 
     return $record;
+
+}
+
+=head2 get_order
+
+=cut
+
+sub get_order {
+
+    my ( $self, $origindata ) = @_;
+
+    my $dbh = C4::Context->dbh;
+
+    my $orders_table = $self->get_qualified_table_name('orders');
+    my $query = "SELECT * FROM $orders_table WHERE origindata = '$origindata';";
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    return $sth->fetchrow_hashref();
+
+}
+
+=head2 update_order_from_request
+
+=cut
+
+sub update_order_from_request {
+
+    my ( $self, $order_id, $req ) = @_;
+
+    my $dbh = C4::Context->dbh;
+
+    my $orders_table = $self->get_qualified_table_name('orders');
+    my $query = "UPDATE $orders_table SET
+        author = ?,
+        title = ?,
+        deliverydate = ?,
+        orderdate = ?,
+        titleno = ?,
+        marcorigin = ?,
+        department = ?";
+    my @values = (
+        $req->{'author'},
+        $req->{'title'},
+        $req->{'deliverydate'},
+        $req->{'orderdate'},
+        $req->{'titleno'},
+        $req->{'marcorigin'},
+        $req->{'department'},
+    );
+    say $dbh->do( $query, undef, @values );
 
 }
 
