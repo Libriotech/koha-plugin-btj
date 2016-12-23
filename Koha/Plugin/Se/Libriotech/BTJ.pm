@@ -18,7 +18,7 @@ package Koha::Plugin::Se::Libriotech::BTJ;
 # along with koha-plugin-btj; if not, see <http://www.gnu.org/licenses>.
 
 use C4::Biblio;
-use C4::Items;
+use C4::Items qw( ModItem GetItemsInfo );
 
 use MARC::Record;
 use MARC::File::XML;
@@ -181,6 +181,8 @@ sub uninstall() {
 
 =head2 process_open_order
 
+Status = 1
+
 =cut
 
 sub process_open_order {
@@ -213,6 +215,7 @@ sub process_open_order {
             'itemcallnumber' => $req->{'shelfmarc'}, # classification??
             'itemnotes'      => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
             'notforloan'     => -1, # Ordered
+            'location'       => $config->{'loc_open_order'},
         );
         my ($biblionumber, $biblioitemnumber, $itemnumber) = AddItem( \%item, $biblionumber );
         say "Added item = $itemnumber to biblionumber = $biblionumber" if $config->{'verbose'};
@@ -247,6 +250,43 @@ sub process_open_order {
     );
     say $dbh->do( $query, undef, @values );
 
+    $self->mark_request_as_processed( $req->{'request_id'} );
+
+}
+
+=head2 process_delivered_order
+
+Status = 2
+
+=cut
+
+sub process_delivered_order {
+
+    my ( $self, $req, $config ) = @_;
+
+    my $dbh = C4::Context->dbh;
+
+    # Find the order
+    my $orders_table = $self->get_qualified_table_name('orders');
+    my $query = "SELECT * FROM $orders_table WHERE origindata = '$req->{'origindata'}';";
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    my $order = $sth->fetchrow_hashref();
+    say "Order: $req->{'origindata'}, order_id: $order->{'order_id'}, biblionumber: $order->{'biblionumber'}" if $config->{'verbose'};
+
+    # Find the items and update them
+    my @items = GetItemsInfo( $order->{'biblionumber'} );
+    foreach my $item ( @items ) {
+
+        ModItem( { location => $config->{'loc_delivered_order'} }, $order->{'biblionumber'}, $item->{'itemnumber'} );
+        say "Itemnumber $item->{'itemnumber'} was updated";
+
+    }
+
+    # Update the order, 2 means "delivered"
+    $self->update_order_status( $order->{'order_id'}, 2 );
+
+    # Mark the request as done
     $self->mark_request_as_processed( $req->{'request_id'} );
 
 }
@@ -312,6 +352,16 @@ sub mark_request_as_processed {
     my $table = $self->get_qualified_table_name('requests');
 
     return C4::Context->dbh->do( "UPDATE $table SET processed = 1 WHERE request_id = $request_id" );
+
+}
+
+sub update_order_status {
+
+    my ( $self, $order_id, $status ) = @_;
+
+    my $orders_table = $self->get_qualified_table_name('orders');
+
+    return C4::Context->dbh->do( "UPDATE $orders_table SET status = $status" );
 
 }
 

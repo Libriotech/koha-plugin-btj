@@ -55,10 +55,12 @@ while ( my $row = $sth->fetchrow_hashref() ) {
     } elsif ( $row->{'status'} == 2 ) {
 
         # Delivered (Swedish: "levererad")
+        $btj->process_delivered_order( $row, $config );
 
     } elsif ( $row->{'status'} == 3 ) {
 
         # Invoiced (Swedish: "fakturerad")
+        # No need to do anything here
 
     } elsif ( $row->{'status'} == 4 ) {
 
