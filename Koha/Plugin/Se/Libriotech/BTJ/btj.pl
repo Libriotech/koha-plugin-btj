@@ -83,10 +83,10 @@ while( my( $key, $value ) = each %data ) {
     }
     push @values, $value;
 }
-say $dbh->do( $query, undef, @values );
 
 print $cgi->header({
     -type     => 'text/html',
     -charset  => 'UTF-8',
     -encoding => "UTF-8"
 });
+say $dbh->do( $query, undef, @values );

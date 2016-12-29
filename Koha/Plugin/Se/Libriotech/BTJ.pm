@@ -18,7 +18,7 @@ package Koha::Plugin::Se::Libriotech::BTJ;
 # along with koha-plugin-btj; if not, see <http://www.gnu.org/licenses>.
 
 use C4::Biblio;
-use C4::Items qw( ModItem GetItemsInfo );
+use C4::Items qw( AddItem ModItem GetItemsInfo );
 
 use MARC::Record;
 use MARC::File::XML;
@@ -33,7 +33,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = "0.0.3";
+our $VERSION = "0.0.4";
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -176,6 +176,80 @@ sub uninstall() {
 
     my $orders_table = $self->get_qualified_table_name('orders');
     C4::Context->dbh->do("DROP TABLE $orders_table");
+
+}
+
+sub tool {
+
+    my ( $self, $args ) = @_;
+
+    my $cgi = $self->{'cgi'};
+    if (      $cgi->param('order') ) {
+        $self->show_order( $cgi->param('order') );
+    } elsif (      $cgi->param('orders') && $cgi->param('orders') eq 'open' ) {
+        $self->show_orders(1);
+    } elsif ( $cgi->param('orders') && $cgi->param('orders') eq 'delivered' ) {
+        $self->show_orders(2);
+    } elsif ( $cgi->param('orders') && $cgi->param('orders') eq 'cancelled' ) {
+        $self->show_orders(4);
+    } else {
+        $self->show_orders();
+    }
+
+}
+
+sub show_order {
+
+    my ( $self, $order_id ) = @_;
+    my $cgi = $self->{'cgi'};
+    my $template = $self->get_template({ file => 'show-order.tt' });
+
+    my $dbh = C4::Context->dbh;
+
+    my $order_table = $self->get_qualified_table_name('orders');
+    my $order_sth   = $dbh->prepare("SELECT * FROM $order_table WHERE order_id = $order_id");
+    $order_sth->execute();
+    my $order = $order_sth->fetchrow_hashref();
+
+    my $requests_table = $self->get_qualified_table_name('requests');
+    my $requests_sth = $dbh->prepare("SELECT * FROM $requests_table WHERE origindata = '$order->{'origindata'}';");
+    $requests_sth->execute();
+    my $requests = $requests_sth->fetchall_arrayref({});
+
+    $template->param(
+        'order'   => $order,
+        'requests' => $requests,
+    );
+
+    print $cgi->header();
+    print $template->output();
+
+}
+
+sub show_orders {
+
+    my ( $self, $status ) = @_;
+    my $cgi = $self->{'cgi'};
+    my $template = $self->get_template({ file => 'show-orders.tt' });
+
+    my $dbh = C4::Context->dbh;
+    my $table = $self->get_qualified_table_name('orders');
+    my $sth;
+    if ( $status && $status > 0 ) {
+        $sth   = $dbh->prepare("SELECT * FROM $table WHERE status = $status ORDER BY order_id DESC");
+    } else {
+        $sth   = $dbh->prepare("SELECT * FROM $table ORDER BY order_id DESC LIMIT 10");
+        $status = 0;
+    }
+    $sth->execute();
+    my $orders = $sth->fetchall_hashref('origindata');
+    $template->param(
+        'orders' => $orders,
+        'status' => $status,
+    );
+
+    print $cgi->header();
+    print $template->output();
 
 }
 

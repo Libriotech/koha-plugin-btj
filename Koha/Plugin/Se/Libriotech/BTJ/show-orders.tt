@@ -1,0 +1,65 @@
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Koha: BTJ orders</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+[% status_string = [ 'New', 'Open', 'Delivered', 'Invoiced', 'Cancelled' ] %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool">BTJ</a> &rsaquo; [% status_string.$status %] orders</div>
+
+<div id="doc3">
+
+    <p>
+        <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool">New</a> |
+        <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&orders=open">Open</a> |
+        <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&orders=cancelled">Delivered</a> |
+        <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&orders=open">Cancelled</a>
+    </p>
+
+    <h3>[% status_string.$status %] orders</h3>
+
+[% IF orders.size > 0 %]
+    <table>
+    <tr>
+        <th>ID</th>
+        <th>Orderdate</th>
+        <th>Status</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Titleno</th>
+        <th>MARCorigin</th>
+        <th>Biblio</th>
+        <th>Department</th>
+        <th>Deliverydate</th>
+    </tr>
+    [% FOREACH key IN orders.keys %]
+    [% SET o = orders.$key %]
+    <tr style="background-color: #ffffff;">
+        <td title="Origindata: [% o.origindata %]">
+            <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&order=[% o.order_id %]">[% o.order_id %]</a>
+        </td>
+        <td>[% o.orderdate %]</td>
+        <td>[% o.status %]</td>
+        <td>[% o.title %]</td>
+        <td>[% o.author %]</td>
+        <td>[% o.titleno %]</td>
+        <td>[% o.marcorigin %]</td>
+        <td>
+            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% o.biblionumber %]">Show</a> | 
+            <a href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% o.biblionumber %]&op=">Edit</a>
+        </td>
+        <td>[% o.department %]</td>
+        <td>[% o.deliverydate %]</td>
+    </tr>
+    [% END %]
+    </table>
+[% ELSE %]
+    <p>No orders found</p>
+[% END %]
+
+</div>
+
+[% INCLUDE 'intranet-bottom.inc' %]
