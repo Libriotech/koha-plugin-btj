@@ -31,6 +31,18 @@ my $cgi  = new CGI;
 my $time = time();
 my $btj  = Koha::Plugin::Se::Libriotech::BTJ->new;
 
+# Check that we have some mandatory arguments
+my $missing = _all_mandatory_args( $cgi, 'OriginData', 'SupplierCode' );
+if ( $missing != 1 ) {
+    print $cgi->header({
+        -type     => 'text/plain',
+        -charset  => 'UTF-8',
+        -encoding => "UTF-8"
+    });
+    say "Missing mandatory argument: $missing";
+    exit;
+}
+
 # Dump the CGI request to a file for debugging
 open ( my $out_fh, ">>", "/tmp/btj-cgi-$time.txt" ) || die "Can't open test.txt: $!";
 $cgi->save( $out_fh );
@@ -90,3 +102,17 @@ print $cgi->header({
     -encoding => "UTF-8"
 });
 say $dbh->do( $query, undef, @values );
+
+sub _all_mandatory_args {
+
+    my ( $cgi, @args ) = @_;
+
+    foreach my $arg ( @args ) {
+        unless ( $cgi->param( $arg ) && $cgi->param( $arg ) ne '' ) {
+            return $arg;
+        }
+    }
+
+    return 1;
+
+}
