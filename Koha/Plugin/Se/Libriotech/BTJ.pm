@@ -33,7 +33,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = "0.0.5";
+our $VERSION = '0.0.6';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -270,8 +270,35 @@ sub process_open_order {
     # Get the record
     my $record = $self->get_record( $req->{'marcorigin'}, $req->{'titleno'}, $config );
     unless ( $record ) {
-        say "Something went wrong, we do not have a record for $req->{'marcorigin'} $req->{'titleno'}";
-        return undef;
+        say "No record found for $req->{'marcorigin'} $req->{'titleno'}, going to create one";
+
+        $record = MARC::Record->new();
+
+        my $titleno    = MARC::Field->new( '001', $req->{'titleno'} );
+        my $marcorigin = MARC::Field->new( '003', $req->{'marcorigin'} );
+        $record->insert_fields_ordered( $titleno, $marcorigin );
+
+        # Create an SIBN field
+        my $isbn = MARC::Field->new(
+            '020', '', '',
+            a => $req->{'isbn'},
+        );
+        $record->insert_fields_ordered( $isbn );
+
+        # Create an author field
+        my $author = MARC::Field->new(
+            '100', '', '',
+            a => $req->{'author'},
+        );
+        $record->insert_fields_ordered( $author );
+
+        ## create a title field.
+        my $title = MARC::Field->new(
+            '245', '', '',
+            a => $req->{'title'},
+        );
+        $record->insert_fields_ordered( $title );
+
     }
     say Dumper $record if $config->{'debug'};
 
@@ -490,6 +517,10 @@ sub get_record_from_libris {
         recordSchema => 'marcxml',
         parser => 'marcxml',
     );
+
+    if ( $importer->count == 0 ) {
+        return undef;
+    }
 
     my $marcxml;
     my $exporter = Catmandu->exporter('MARC', file => \$marcxml, type => "XML" );
