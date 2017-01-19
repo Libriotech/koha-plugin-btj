@@ -14,6 +14,11 @@ Plugin to receive aquisitions data from the Swedish BTJ
 
 =head2 From published package
 
+Visit https://github.com/Libriotech/koha-plugin-btj/releases and download the
+most recent .kpz.
+
+Enable plugins in Koha and upload the .kpz file.
+
 =head2 From git
 
 Clone the git repo.
