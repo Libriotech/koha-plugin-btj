@@ -33,7 +33,7 @@ my $btj  = Koha::Plugin::Se::Libriotech::BTJ->new;
 
 # Check that we have some mandatory arguments
 my $missing = _all_mandatory_args( $cgi, 'OriginData', 'SupplierCode' );
-if ( $missing != 1 ) {
+if ( $missing ne 'ok' ) {
     print $cgi->header({
         -type     => 'text/plain',
         -charset  => 'UTF-8',
@@ -113,6 +113,6 @@ sub _all_mandatory_args {
         }
     }
 
-    return 1;
+    return 'ok';
 
 }
