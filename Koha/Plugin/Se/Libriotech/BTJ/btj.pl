@@ -96,12 +96,17 @@ while( my( $key, $value ) = each %data ) {
     push @values, $value;
 }
 
-print $cgi->header({
-    -type     => 'text/html',
-    -charset  => 'UTF-8',
-    -encoding => "UTF-8"
-});
-say $dbh->do( $query, undef, @values );
+my $ret = $dbh->do( $query, undef, @values );
+if ( $ret ) {
+    print $cgi->header({
+        -type     => 'text/xml',
+        -charset  => 'UTF-8',
+        -encoding => "UTF-8"
+    });
+    say '<status value="ok"/>';
+} else {
+    say "Could not save the request.";
+}
 
 sub _all_mandatory_args {
 
