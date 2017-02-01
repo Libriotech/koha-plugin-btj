@@ -76,7 +76,7 @@ order[% INCLUDE 'doc-head-open.inc' %]
     <td>Localshelf</td>
     <td>Loanperiod</td>
     <td>Shelfmarc</td>
-    <td>Accountv</td>
+    <td>Account</td>
     <td>Status</td>
     <td>Origindata</td>
     <td>Remote_ip</td>
@@ -103,7 +103,7 @@ order[% INCLUDE 'doc-head-open.inc' %]
     <td>[% r.localshelf %]</td>
     <td>[% r.loanperiod %]</td>
     <td>[% r.shelfmarc %]</td>
-    <td>[% r.accountv %]</td>
+    <td>[% r.account %]</td>
     <td>[% r.status %]</td>
     <td>[% r.origindata %]</td>
     <td>[% r.remote_ip %]</td>

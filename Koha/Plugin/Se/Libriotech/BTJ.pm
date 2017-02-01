@@ -130,7 +130,7 @@ sub install() {
             localshelf varchar(255),        -- LocalShelf: Värde som användaren angav när ordern lades (placering)
             loanperiod varchar(255),        -- LoanPeriod: Värde som användaren angav när ordern lades (lånetid)
             shelfmarc varchar(255),         -- ShelfMarc: Värde som användaren angav när ordern lades (avvikande hyllsignatur)
-            accountv varchar(255),          -- AccountV: Värde som användaren angav när ordern lades (anslag)
+            account varchar(255),           -- Account: Värde som användaren angav när ordern lades (anslag)
             status int not null default 0,  -- Status: Orderns status (1=Öppen order, 2= levererad, 3= fakturerad, 4=annullerad)
             origindata varchar(255),        -- OriginData: Unikt värde för varje orderrad, om en LINK beställning så kommer den därifrån annars genererar vi ett unikt värde för varje orderrad.
             remote_ip char(16),
