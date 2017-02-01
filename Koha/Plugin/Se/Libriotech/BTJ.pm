@@ -33,7 +33,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = '0.0.9';
+our $VERSION = '0.0.10';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -137,7 +137,7 @@ sub install() {
             processed tinyint(1) not null default 0,
             added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, 
             PRIMARY KEY (request_id)
-        ) ENGINE = INNODB;
+        ) ENGINE = INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     " );
     $end_result = 0 unless $result;
 
@@ -157,7 +157,7 @@ sub install() {
             biblionumber int(11) not null,  -- A link to the biblio and biblioitems table, as well as for finding items in the items table
             added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (order_id)
-        ) ENGINE = INNODB;
+        ) ENGINE = INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     " );
     $end_result = 0 unless $result;
 
