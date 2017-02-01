@@ -53,7 +53,7 @@ close( $out_fh );
 
 my %data = (
     'suppliercode'   => $cgi->param( 'SupplierCode' ) || '',
-    'customerno'     => $cgi->param( 'CustomerNoCustomer' ) || '',
+    'customerno'     => $cgi->param( 'CustomerNo' ) || '',
     'author'         => $cgi->param( 'Author' ) || '',
     'title'          => $cgi->param( 'Title' ) || '',
     'isbn'           => $cgi->param( 'Isbn' ) || '',
