@@ -184,24 +184,31 @@ sub tool {
     my ( $self, $args ) = @_;
 
     my $cgi = $self->{'cgi'};
+    my $template;
     if (      $cgi->param('order') ) {
-        $self->show_order( $cgi->param('order') );
+        $template = $self->show_order( $cgi->param('order') );
     } elsif (      $cgi->param('orders') && $cgi->param('orders') eq 'open' ) {
-        $self->show_orders(1);
+        $template = $self->show_orders(1);
     } elsif ( $cgi->param('orders') && $cgi->param('orders') eq 'delivered' ) {
-        $self->show_orders(2);
+        $template = $self->show_orders(2);
     } elsif ( $cgi->param('orders') && $cgi->param('orders') eq 'cancelled' ) {
-        $self->show_orders(4);
+        $template = $self->show_orders(4);
     } else {
-        $self->show_orders();
+        $template = $self->show_orders();
     }
+
+    print $cgi->header({
+        -type     => 'text/html',
+        -charset  => 'UTF-8',
+        -encoding => "UTF-8"
+    });
+    print $template->output();
 
 }
 
 sub show_order {
 
     my ( $self, $order_id ) = @_;
-    my $cgi = $self->{'cgi'};
     my $template = $self->get_template({ file => 'show-order.tt' });
 
     my $dbh = C4::Context->dbh;
@@ -221,15 +228,13 @@ sub show_order {
         'requests' => $requests,
     );
 
-    print $cgi->header();
-    print $template->output();
+    return $template;
 
 }
 
 sub show_orders {
 
     my ( $self, $status ) = @_;
-    my $cgi = $self->{'cgi'};
     my $template = $self->get_template({ file => 'show-orders.tt' });
 
     my $dbh = C4::Context->dbh;
@@ -243,13 +248,13 @@ sub show_orders {
     }
     $sth->execute();
     my $orders = $sth->fetchall_hashref('origindata');
+
     $template->param(
         'orders' => $orders,
         'status' => $status,
     );
 
-    print $cgi->header();
-    print $template->output();
+    return $template;
 
 }
 
