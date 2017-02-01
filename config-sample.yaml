@@ -1,0 +1,46 @@
+---
+
+# When these scripts add a new item, those items will be given the following
+# itemtype initially. This should probably be called "On order" or something
+# similar. 
+on_order_itemtype: 'UNDERINKOP'
+
+# When a new item is added, they can be given a temporary holdingbranch, which 
+# will indicate the item is on order and not yet on the shelf. 
+on_order_branch: 'UNDERINKOP'
+
+# A note will be added to each item, with the expected delivery date reported
+# by BTJ (as DeliveryDate). You can prefix this date with a text string of your 
+# own choosing. E.g.: 
+#    deliverydate_prefix: "Förventat: "
+# results in:
+#    "Förventat: 2016-12-19"
+# Please include at least one space at the end of the string
+deliverydate_prefix: "Förventat: "
+
+# Similar to deliverydate_prefix, but the string you add here will be added
+# after the date. E.g.:
+#    deliverydate_prefix: "Förventat: "
+#    deliverydate_postfix: " (ungefär)"
+# results in:
+#    "Förventat: 2016-12-19 (ungefär)"
+# Please include at least one space at the start of the string
+deliverydate_postfix: ""
+
+# An authorized value in the LOC category, used for items connected to open orders
+loc_open_order: 'BTJORD'
+
+# An authorized value in the LOC category, used for items connected to delivered
+# orders. This can be used to display "On order" in the OPAC, but e.g. "Sent
+# from BTJ" in the staff client.
+loc_delivered_order: 'BTJDEL'
+
+# An authorized value in the NOT_LOAN category, used for orders that have been 
+# cancelled. This should be a positive number, to prevent items from being
+# placed on hold etc. To hide these from view in the OPAC, use the 
+# OpacHiddenItems system preference, with content like this: 
+#     notforloan: [3]
+# (3 is just used as an example here, it could be some other positive number.
+# But do make sure you use the same number for this configvariable and in the
+# OpacHiddenItems syspref.)
+not_loan_cancelled: 3
