@@ -276,34 +276,7 @@ sub process_open_order {
     my $record = $self->get_record( $req->{'marcorigin'}, $req->{'titleno'}, $config );
     unless ( $record ) {
         say "No record found for $req->{'marcorigin'} $req->{'titleno'}, going to create one";
-
-        $record = MARC::Record->new();
-
-        my $titleno    = MARC::Field->new( '001', $req->{'titleno'} );
-        my $marcorigin = MARC::Field->new( '003', $req->{'marcorigin'} );
-        $record->insert_fields_ordered( $titleno, $marcorigin );
-
-        # Create an SIBN field
-        my $isbn = MARC::Field->new(
-            '020', '', '',
-            a => $req->{'isbn'},
-        );
-        $record->insert_fields_ordered( $isbn );
-
-        # Create an author field
-        my $author = MARC::Field->new(
-            '100', '', '',
-            a => $req->{'author'},
-        );
-        $record->insert_fields_ordered( $author );
-
-        ## create a title field.
-        my $title = MARC::Field->new(
-            '245', '', '',
-            a => $req->{'title'},
-        );
-        $record->insert_fields_ordered( $title );
-
+        $record = _create_record_from_request( $req );
     }
     say Dumper $record if $config->{'debug'};
 
@@ -558,6 +531,53 @@ sub update_order_status {
     my $orders_table = $self->get_qualified_table_name('orders');
 
     return C4::Context->dbh->do( "UPDATE $orders_table SET status = $status" );
+
+}
+
+=head1 INTERNAL SUBROUTINES
+
+=head2 _create_record_from_request()
+
+  my $record = _create_record_from_request( $request );
+
+Takes: A request.
+
+Returns: A minimal MARC::Record, with title, author and ISBN from the request.
+
+=cut
+
+sub _create_record_from_request {
+
+    my ( $req ) = @_;
+
+    my $record = MARC::Record->new();
+
+    my $titleno    = MARC::Field->new( '001', $req->{'titleno'} );
+    my $marcorigin = MARC::Field->new( '003', $req->{'marcorigin'} );
+    $record->insert_fields_ordered( $titleno, $marcorigin );
+
+    # Create an SIBN field
+    my $isbn = MARC::Field->new(
+        '020', '', '',
+        a => $req->{'isbn'},
+    );
+    $record->insert_fields_ordered( $isbn );
+
+    # Create an author field
+    my $author = MARC::Field->new(
+        '100', '', '',
+        a => $req->{'author'},
+    );
+    $record->insert_fields_ordered( $author );
+
+    ## create a title field.
+    my $title = MARC::Field->new(
+        '245', '', '',
+        a => $req->{'title'},
+    );
+    $record->insert_fields_ordered( $title );
+
+    return $record;
 
 }
 
