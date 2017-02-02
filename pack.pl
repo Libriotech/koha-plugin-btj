@@ -36,6 +36,13 @@ Package up the relevant parts as a .kpz Koha plugin file.
 =cut
 
 use Modern::Perl;
+
+system( "prove -r" );
+if ( $? == -1 ) {
+    say "Tests failed";
+    exit
+}
+
 use Koha::Plugin::Se::Libriotech::BTJ;
 my $version  = $Koha::Plugin::Se::Libriotech::BTJ::VERSION;
 my $filename = "koha-plugin-btj-$version.kpz";
