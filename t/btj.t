@@ -20,8 +20,12 @@
 # for every call to SearchAuthorities
 
 use Modern::Perl;
-use Test::More;
+use Test::Compile;
 
-use_ok( 'Koha::Plugin::Se::Libriotech::BTJ' );
+my $test = Test::Compile->new();
+$test->verbose(0);
+$test->all_files_ok( '.' );
 
-done_testing();
+$test->done_testing();
+
+# done_testing();
