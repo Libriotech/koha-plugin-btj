@@ -274,9 +274,12 @@ sub process_open_order {
     my $dbh = C4::Context->dbh;
 
     # Get the record
-    my $record = $self->get_record( $req->{'marcorigin'}, $req->{'titleno'}, $config );
+    my $record;
+    if ( $req->{'marcorigin'} && $req->{'marcorigin'} ne '' && $req->{'titleno'} && $req->{'titleno'} ne '' ) {
+        $record = $self->get_record( $req->{'marcorigin'}, $req->{'titleno'}, $config );
+    }
     unless ( $record ) {
-        say "No record found for $req->{'marcorigin'} $req->{'titleno'}, going to create one";
+        say "No record found, going to create one (marcorigin=$req->{'marcorigin'} titleno=$req->{'titleno'})" if $config->{'debug'};
         $record = _create_record_from_request( $req );
     }
     say Dumper $record if $config->{'debug'};
@@ -488,7 +491,7 @@ sub get_record_from_libris {
 
     my ( $self, $titleno, $config ) = @_;
 
-    say "Looking for $titleno in LIBRIS" if $config->{'verbose'};
+    say "Looking for '$titleno' in LIBRIS" if $config->{'verbose'};
 
     my $importer = Catmandu::Importer::SRU->new(
         base => 'http://api.libris.kb.se/sru/libris', # Libris SRU endpoint
@@ -496,10 +499,7 @@ sub get_record_from_libris {
         recordSchema => 'marcxml',
         parser => 'marcxml',
     );
-
-    if ( $importer->count == 0 ) {
-        return undef;
-    }
+    say $importer->url() if $config->{'debug'};
 
     my $marcxml;
     my $exporter = Catmandu->exporter('MARC', file => \$marcxml, type => "XML" );
@@ -508,10 +508,12 @@ sub get_record_from_libris {
     if ( $marcxml ) {
        # marc:collection is not closed, for some reason
        $marcxml .= '</marc:collection>';
-        say "Found it" if $config->{'verbose'};
+       say "Found it" if $config->{'verbose'};
+       say $marcxml if $config->{'debug'};
+       return MARC::Record->new_from_xml( $marcxml );
+    } else {
+        return undef;
     }
-
-    return MARC::Record->new_from_xml( $marcxml );
 
 }
 
