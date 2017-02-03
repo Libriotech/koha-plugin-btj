@@ -34,13 +34,7 @@ my $btj  = Koha::Plugin::Se::Libriotech::BTJ->new;
 # Check that we have some mandatory arguments
 my $missing = _all_mandatory_args( $cgi, 'OriginData', 'SupplierCode' );
 if ( $missing ne 'ok' ) {
-    print $cgi->header({
-        -type     => 'text/plain',
-        -charset  => 'UTF-8',
-        -encoding => "UTF-8"
-    });
-    say "Missing mandatory argument: $missing";
-    exit;
+    $btj->send_response( "Missing mandatory argument: $missing" );
 }
 
 # Dump the CGI request to a file for debugging
@@ -98,14 +92,9 @@ while( my( $key, $value ) = each %data ) {
 
 my $ret = $dbh->do( $query, undef, @values );
 if ( $ret ) {
-    print $cgi->header({
-        -type     => 'text/xml',
-        -charset  => 'UTF-8',
-        -encoding => "UTF-8"
-    });
-    say '<status value="ok"/>';
+    $btj->send_response( 'OK' );
 } else {
-    say "Could not save the request.";
+    $btj->send_response( "Could not save the request." );
 }
 
 sub _all_mandatory_args {

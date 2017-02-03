@@ -24,6 +24,7 @@ use MARC::Record;
 use MARC::File::XML;
 use Catmandu::Importer::SRU;
 use Catmandu::Exporter::MARC;
+use CGI qw ( -utf8 );
 use Data::Dumper;
 use Modern::Perl;
 
@@ -33,7 +34,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = '0.0.11';
+our $VERSION = '0.0.12';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -41,7 +42,7 @@ our $metadata = {
     author          => 'Magnus Enger, Libriotech',
     description     => 'Receive aquisitions data from BTJ',
     date_authored   => '2016-10-18',
-    date_updated    => '2017-02-01',
+    date_updated    => '2017-02-03',
     minimum_version => '16.04',
     maximum_version => undef,
     version         => $VERSION,
@@ -531,6 +532,35 @@ sub update_order_status {
     my $orders_table = $self->get_qualified_table_name('orders');
 
     return C4::Context->dbh->do( "UPDATE $orders_table SET status = $status" );
+
+}
+
+=head2 _send_response()
+
+  $btj->send_response( $message );
+
+Takes a text string and sends it off as an XML formatted response.
+
+Returns: Nothing.
+
+=cut
+
+sub send_response {
+
+    my ( $self, $msg ) = @_;
+    my $cgi  = new CGI;
+
+    print $cgi->header({
+        -type     => 'text/xml',
+        -charset  => 'UTF-8',
+        -encoding => "UTF-8"
+    });
+    say '<?xml version="1.0" encoding="UTF-8"?>';
+    say '<status>';
+    say "<value>$msg</value>";
+    say '</status>';
+
+    exit;
 
 }
 
