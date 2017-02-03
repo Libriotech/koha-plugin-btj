@@ -47,7 +47,9 @@ while ( my $row = $sth->fetchrow_hashref() ) {
 
     say "$row->{'request_id'}: \"$row->{'title'}\" $row->{'marcorigin'} $row->{'titleno'}" if $verbose;
 
-    # FIXME Use the origindata to look for an existing order and tak appropriate action
+    # Always update the biblio record, either from the request or from the
+    # external source
+    $btj->update_biblio( $row, $config );
 
     if ( $row->{'status'} == 1 ) {
 

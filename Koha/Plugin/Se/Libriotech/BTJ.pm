@@ -34,7 +34,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = '0.0.12';
+our $VERSION = '0.0.13';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -259,19 +259,64 @@ sub show_orders {
 
 }
 
-=head2 process_open_order
+=head2 update_biblio()
 
-Status = 1
+  $btj->update_biblio( $request, $config );
+
+If there is no biblio, add it. If there is a biblio, update it. 
+
+Use data from the request if there is no TitleNo, or get the record from an 
+external source if there is a TitleNo.
 
 =cut
 
-sub process_open_order {
+sub update_biblio {
 
     my ( $self, $req, $config ) = @_;
 
-    return unless $req->{'status'} == 1;
-
     my $dbh = C4::Context->dbh;
+
+    # Check if there is an order for this request
+    my $order = $self->get_order( $req->{'origindata'} );
+    unless ( $order ) {
+
+        say "No saved order found, going to save it now" if $config->{'debug'};
+
+        # Record this as a new order in the 'orders' table
+        my $orders_table = $self->get_qualified_table_name('orders');
+        my $query = "INSERT INTO $orders_table SET
+            author = ?,
+            title = ?,
+            deliverydate = ?,
+            orderdate = ?,
+            titleno = ?,
+            marcorigin = ?,
+            department = ?,
+            status = ?,
+            origindata = ?";
+        my @values = (
+            $req->{'author'},
+            $req->{'title'},
+            $req->{'deliverydate'},
+            $req->{'orderdate'},
+            $req->{'titleno'},
+            $req->{'marcorigin'},
+            $req->{'department'},
+            $req->{'status'},
+            $req->{'origindata'},
+        );
+        if ( $dbh->do( $query, undef, @values ) ) {
+            # And retrieve the data again
+            $order = $self->get_order( $req->{'origindata'} );
+        } else {
+            say "Could not save the order";
+            return;
+        }
+
+    } else {
+        say "Found an existing order" if $config->{'debug'};
+        say Dumper $order;
+    }
 
     # Get the record
     my $record;
@@ -284,56 +329,68 @@ sub process_open_order {
     }
     say Dumper $record if $config->{'debug'};
 
-    # Add record and items to Koha
-    # FIXME Should frameworkcode be configurable?
-    my ( $biblionumber, $biblioitemnumber ) = AddBiblio( $record, '' );
+    if ( $order->{'biblionumber'} ) {
 
-    say "Saved as biblionumber = $biblionumber" if $config->{'verbose'};
+        # TODO Update the record in Koha
+        if ( ModBiblio( $record, $order->{'biblionumber'}, '' ) ) {
+            say "biblionumber=$order->{'biblionumber'} was updated" if $config->{'debug'};
+        } else {
+            say "biblionumber=$order->{'biblionumber'} was NOT updated" if $config->{'debug'};
+        }
 
-    # Add items to the record
-    for ( 1..$req->{'noofcopies'} ) {
+    } else {
 
-        my %item = (
-            'homebranch'     => $req->{'department'},
-            'holdingbranch'  => $config->{'on_order_branch'},
-            'itype'          => $config->{'on_order_itemtype'},
-            'itemcallnumber' => $req->{'shelfmarc'}, # classification??
-            'itemnotes'      => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
-            'notforloan'     => -1, # Ordered
-            'location'       => $config->{'loc_open_order'},
-        );
-        my ($biblionumber, $biblioitemnumber, $itemnumber) = AddItem( \%item, $biblionumber );
-        say "Added item = $itemnumber to biblionumber = $biblionumber" if $config->{'verbose'};
+        # Add record and items to Koha
+        # FIXME Should frameworkcode be configurable?
+        my ( $biblionumber, $biblioitemnumber ) = AddBiblio( $record, '' );
+        say "Saved as biblionumber = $biblionumber" if $config->{'verbose'};
+
+        # TODO Add the biblionumber to the order
+        $self->update_order_with_biblionumber( $order->{'order_id'}, $biblionumber );
+
+        # Add items to the record
+        for ( 1..$req->{'noofcopies'} ) {
+
+            my %item = (
+                'homebranch'     => $req->{'department'},
+                'holdingbranch'  => $config->{'on_order_branch'},
+                'itype'          => $config->{'on_order_itemtype'},
+                'itemcallnumber' => $req->{'shelfmarc'}, # classification??
+                'itemnotes'      => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
+                'notforloan'     => -1, # Ordered
+                'location'       => $config->{'loc_open_order'},
+            );
+            my ($biblionumber, $biblioitemnumber, $itemnumber) = AddItem( \%item, $biblionumber );
+            say "Added item = $itemnumber to biblionumber = $biblionumber" if $config->{'verbose'};
+
+        }
 
     }
 
-    # Record this as a new order in the 'orders' table
-    my $orders_table = $self->get_qualified_table_name('orders');
-    my $query = "INSERT INTO $orders_table SET
-        author = ?,
-        title = ?,
-        deliverydate = ?,
-        orderdate = ?,
-        titleno = ?,
-        marcorigin = ?,
-        department = ?,
-        status = ?,
-        origindata = ?,
-        biblionumber = ?";
-    my @values = (
-        $req->{'author'},
-        $req->{'title'},
-        $req->{'deliverydate'},
-        $req->{'orderdate'},
-        $req->{'titleno'},
-        $req->{'marcorigin'},
-        $req->{'department'},
-        $req->{'status'},
-        $req->{'origindata'},
-        $biblionumber,
-    );
-    say $dbh->do( $query, undef, @values );
+}
 
+=head2 process_open_order
+
+Status = 1
+
+=cut
+
+sub process_open_order {
+
+    my ( $self, $req, $config ) = @_;
+
+    return unless $req->{'status'} == 1;
+
+    # Find the order
+    my $order = $self->get_order( $req->{'origindata'} );
+
+    # Update the order with info from the request
+    $self->update_order_from_request( $order->{'order_id'}, $req );
+
+    # Update the order, 2 means "open"
+    $self->update_order_status( $order->{'order_id'}, 1 );
+
+    # Mark the request as done
     $self->mark_request_as_processed( $req->{'request_id'} );
 
 }
@@ -533,7 +590,17 @@ sub update_order_status {
 
     my $orders_table = $self->get_qualified_table_name('orders');
 
-    return C4::Context->dbh->do( "UPDATE $orders_table SET status = $status" );
+    return C4::Context->dbh->do( "UPDATE $orders_table SET status = $status WHERE order_id = $order_id" );
+
+}
+
+sub update_order_with_biblionumber {
+
+    my ( $self, $order_id, $biblionumber ) = @_;
+
+    my $orders_table = $self->get_qualified_table_name('orders');
+
+    return C4::Context->dbh->do( "UPDATE $orders_table SET biblionumber = $biblionumber WHERE order_id = $order_id" );
 
 }
 
