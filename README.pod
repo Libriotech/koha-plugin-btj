@@ -10,6 +10,11 @@ Plugin to receive aquisitions data from the Swedish BTJ
 
   sudo cpan MARC::Record MARC::File::XML Catmandu::Importer::SRU Catmandu::Exporter::MARC
 
+Be aware that it seems Catmandu::Importer::SRU can get stuck on version 0.0101.
+If no MARC records can be downloaded try installing a newer version like so:
+
+  sudo cpan N/NI/NICS/Catmandu-SRU-0.039.tar.gz
+
 =head1 INSTALLATION
 
 =head2 From published package
