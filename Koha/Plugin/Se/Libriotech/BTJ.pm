@@ -538,7 +538,7 @@ sub update_order_from_request {
         $req->{'department'},
         $order_id,
     );
-    say $dbh->do( $query, undef, @values );
+    return $dbh->do( $query, undef, @values );
 
 }
 
