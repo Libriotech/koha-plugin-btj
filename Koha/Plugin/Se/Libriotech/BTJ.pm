@@ -564,7 +564,6 @@ sub get_record_from_libris {
         recordSchema => 'marcxml',
         parser => 'marcxml',
     );
-    say $importer->url() if $config->{'debug'};
 
     my $marcxml;
     my $exporter = Catmandu->exporter('MARC', file => \$marcxml, type => "XML" );
