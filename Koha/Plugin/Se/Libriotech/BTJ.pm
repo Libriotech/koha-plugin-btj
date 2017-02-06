@@ -574,7 +574,9 @@ sub get_record_from_libris {
        $marcxml .= '</marc:collection>';
        say "Found it" if $config->{'verbose'};
        say $marcxml if $config->{'debug'};
-       return MARC::Record->new_from_xml( $marcxml );
+       my $record = MARC::Record->new_from_xml( $marcxml, 'UTF-8' );
+       $record->encoding( 'UTF-8' );
+       return $record;
     } else {
         return undef;
     }
