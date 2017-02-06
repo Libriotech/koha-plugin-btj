@@ -34,7 +34,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = '0.0.15';
+our $VERSION = '0.0.16';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -358,8 +358,8 @@ sub update_biblio {
             }
 
             my %item = (
-                'homebranch'     => $req->{'department'},
-                'holdingbranch'  => $homebranch,
+                'homebranch'     => $homebranch,
+                'holdingbranch'  => $config->{'on_order_branch'},
                 'itype'          => $config->{'on_order_itemtype'},
                 'itemcallnumber' => $req->{'shelfmarc'}, # classification??
                 'itemnotes'      => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
