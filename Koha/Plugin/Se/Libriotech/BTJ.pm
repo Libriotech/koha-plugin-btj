@@ -520,7 +520,8 @@ sub update_order_from_request {
         orderdate = ?,
         titleno = ?,
         marcorigin = ?,
-        department = ?";
+        department = ?
+        WHERE order_id = ?";
     my @values = (
         $req->{'author'},
         $req->{'title'},
@@ -529,6 +530,7 @@ sub update_order_from_request {
         $req->{'titleno'},
         $req->{'marcorigin'},
         $req->{'department'},
+        $order_id,
     );
     say $dbh->do( $query, undef, @values );
 
