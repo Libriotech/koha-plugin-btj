@@ -19,7 +19,7 @@ order[% INCLUDE 'doc-head-open.inc' %]
 
     <h3>Orders</h3>
 
-    <h2>Order #[% order.order_id %]</h2>
+    <h2>Order #[% order.order_id | html %]</h2>
     <table>
     <tr>
         <th>ID</th>
@@ -34,21 +34,21 @@ order[% INCLUDE 'doc-head-open.inc' %]
         <th>Deliverydate</th>
     </tr>
     <tr>
-        <td title="Origindata: [% order.origindata %]">
-            <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&order=[% order.order_id %]">[% order.order_id %]</a>
+        <td title="Origindata: [% order.origindata | html %]">
+            <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&order=[% order.order_id | html %]">[% order.order_id | html %]</a>
         </td>
-        <td>[% order.orderdate %]</td>
-        <td>[% order.status %]</td>
-        <td>[% order.title %]</td>
-        <td>[% order.author %]</td>
-        <td>[% order.titleno %]</td>
-        <td>[% order.marcorigin %]</td>
+        <td>[% order.orderdate | html %]</td>
+        <td>[% order.status | html %]</td>
+        <td>[% order.title | html %]</td>
+        <td>[% order.author | html %]</td>
+        <td>[% order.titleno | html %]</td>
+        <td>[% order.marcorigin | html %]</td>
         <td>
-            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% order.biblionumber %]">Show</a> | 
-            <a href="/cgi-bin/koha/cataloguing/addbibliorder.pl?biblionumber=[% order.biblionumber %]&op=">Edit</a>
+            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% order.biblionumber | html %]">Show</a> | 
+            <a href="/cgi-bin/koha/cataloguing/addbibliorder.pl?biblionumber=[% order.biblionumber | html %]&op=">Edit</a>
         </td>
-        <td>[% order.department %]</td>
-        <td>[% order.deliverydate %]</td>
+        <td>[% order.department | html %]</td>
+        <td>[% order.deliverydate | html %]</td>
     </tr>
     </table>
 
@@ -83,30 +83,30 @@ order[% INCLUDE 'doc-head-open.inc' %]
 </tr>
 [% FOREACH r IN requests %]
 <tr>
-    <td>[% r.suppliercode %]</td>
-    <td>[% r.customerno %]</td>
-    <td>[% r.author %]</td>
-    <td>[% r.title %]</td>
-    <td>[% r.isbn %]</td>
-    <td>[% r.classification %]</td>
-    <td>[% r.purchasenote %]</td>
-    <td>[% r.articleno %]</td>
-    <td>[% r.price %]</td>
-    <td>[% r.currency %]</td>
-    <td>[% r.deliverydate %]</td>
-    <td>[% r.infonote %]</td>
-    <td>[% r.noofcopies %]</td>
-    <td>[% r.orderdate %]</td>
-    <td>[% r.titleno %]</td>
-    <td>[% r.marcorigin %]</td>
-    <td>[% r.department %]</td>
-    <td>[% r.localshelf %]</td>
-    <td>[% r.loanperiod %]</td>
-    <td>[% r.shelfmarc %]</td>
-    <td>[% r.account %]</td>
-    <td>[% r.status %]</td>
-    <td>[% r.origindata %]</td>
-    <td>[% r.remote_ip %]</td>
+    <td>[% r.suppliercode | html %]</td>
+    <td>[% r.customerno | html %]</td>
+    <td>[% r.author | html %]</td>
+    <td>[% r.title | html %]</td>
+    <td>[% r.isbn | html %]</td>
+    <td>[% r.classification | html %]</td>
+    <td>[% r.purchasenote | html %]</td>
+    <td>[% r.articleno | html %]</td>
+    <td>[% r.price | html %]</td>
+    <td>[% r.currency | html %]</td>
+    <td>[% r.deliverydate | html %]</td>
+    <td>[% r.infonote | html %]</td>
+    <td>[% r.noofcopies | html %]</td>
+    <td>[% r.orderdate | html %]</td>
+    <td>[% r.titleno | html %]</td>
+    <td>[% r.marcorigin | html %]</td>
+    <td>[% r.department | html %]</td>
+    <td>[% r.localshelf | html %]</td>
+    <td>[% r.loanperiod | html %]</td>
+    <td>[% r.shelfmarc | html %]</td>
+    <td>[% r.account | html %]</td>
+    <td>[% r.status | html %]</td>
+    <td>[% r.origindata | html %]</td>
+    <td>[% r.remote_ip | html %]</td>
 </tr>
 [% END %]
 </table>

@@ -8,7 +8,7 @@
 
 [% status_string = [ 'New', 'Open', 'Delivered', 'Invoiced', 'Cancelled' ] %]
 
-<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool">BTJ</a> &rsaquo; [% status_string.$status %] orders</div>
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool">BTJ</a> &rsaquo; [% status_string.$status | html %] orders</div>
 
 <div id="doc3">
 
@@ -19,7 +19,7 @@
         <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&orders=open">Cancelled</a>
     </p>
 
-    <h3>[% status_string.$status %] orders</h3>
+    <h3>[% status_string.$status | html %] orders</h3>
 
 [% IF orders.size > 0 %]
     <table>
@@ -38,21 +38,21 @@
     [% FOREACH key IN orders.keys %]
     [% SET o = orders.$key %]
     <tr style="background-color: #ffffff;">
-        <td title="Origindata: [% o.origindata %]">
-            <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&order=[% o.order_id %]">[% o.order_id %]</a>
+        <td title="Origindata: [% o.origindata | html %]">
+            <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&order=[% o.order_id | html %]">[% o.order_id | html %]</a>
         </td>
-        <td>[% o.orderdate %]</td>
-        <td>[% o.status %]</td>
-        <td>[% o.title %]</td>
-        <td>[% o.author %]</td>
-        <td>[% o.titleno %]</td>
-        <td>[% o.marcorigin %]</td>
+        <td>[% o.orderdate | html %]</td>
+        <td>[% o.status | html %]</td>
+        <td>[% o.title | html %]</td>
+        <td>[% o.author | html %]</td>
+        <td>[% o.titleno | html %]</td>
+        <td>[% o.marcorigin | html %]</td>
         <td>
-            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% o.biblionumber %]">Show</a> | 
-            <a href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% o.biblionumber %]&op=">Edit</a>
+            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% o.biblionumber | html %]">Show</a> | 
+            <a href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% o.biblionumber | html %]&op=">Edit</a>
         </td>
-        <td>[% o.department %]</td>
-        <td>[% o.deliverydate %]</td>
+        <td>[% o.department | html %]</td>
+        <td>[% o.deliverydate | html %]</td>
     </tr>
     [% END %]
     </table>
