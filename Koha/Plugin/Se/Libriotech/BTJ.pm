@@ -34,7 +34,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = '0.0.16';
+our $VERSION = '0.0.17';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
@@ -658,6 +658,7 @@ sub _create_record_from_request {
     my ( $req ) = @_;
 
     my $record = MARC::Record->new();
+    $record->encoding( 'UTF-8' );
 
     my $titleno    = MARC::Field->new( '001', $req->{'titleno'} );
     my $marcorigin = MARC::Field->new( '003', $req->{'marcorigin'} );
