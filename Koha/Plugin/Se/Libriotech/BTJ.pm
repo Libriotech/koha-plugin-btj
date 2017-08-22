@@ -358,13 +358,13 @@ sub update_biblio {
             }
 
             my %item = (
-                'homebranch'     => $homebranch,
-                'holdingbranch'  => $config->{'on_order_branch'},
-                'itype'          => $config->{'on_order_itemtype'},
-                'itemcallnumber' => $req->{'shelfmarc'}, # classification??
-                'itemnotes'      => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
-                'notforloan'     => -1, # Ordered
-                'location'       => $config->{'loc_open_order'},
+                'homebranch'          => $homebranch,
+                'holdingbranch'       => $config->{'on_order_branch'},
+                'itype'               => $config->{'on_order_itemtype'},
+                'itemcallnumber'      => $req->{'shelfmarc'}, # classification??
+                'itemnotes_nonpublic' => $config->{'deliverydate_prefix'} . $req->{'deliverydate'} . $config->{'deliverydate_postfix'},
+                'notforloan'          => -1, # Ordered
+                'location'            => $config->{'loc_open_order'},
             );
             my ($biblionumber, $biblioitemnumber, $itemnumber) = AddItem( \%item, $biblionumber );
             say "Added item = $itemnumber to biblionumber = $biblionumber" if $config->{'verbose'};
