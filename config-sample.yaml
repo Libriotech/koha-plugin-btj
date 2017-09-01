@@ -9,10 +9,10 @@ on_order_itemtype: 'UNDERINKOP'
 # will indicate the item is on order and not yet on the shelf. 
 on_order_branch: 'UNDERINKOP'
 
-# The data from BTJ contains a "department id" for each item. These can be
+# The data from BTJ contains a "customerno" for each item. These can be
 # mapped to library codes in Koha. If a mapping is not defined here, the
 # on_order_branch defined above will be used.
-department2library:
+customerno2library:
   000000001: BIB1
   000000002: BIB2
 
