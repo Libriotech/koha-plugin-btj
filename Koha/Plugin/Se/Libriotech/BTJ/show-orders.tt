@@ -41,7 +41,7 @@
         <td title="Origindata: [% o.origindata | html %]">
             <a href="run.pl?class=Koha::Plugin::Se::Libriotech::BTJ&method=tool&order=[% o.order_id | html %]">[% o.order_id | html %]</a>
         </td>
-        <td>[% o.orderdate | html %]</td>
+        <td>[% USE String( order.orderdate ) %][% String.truncate(10) | html %]</td>
         <td>[% o.status | html %]</td>
         <td>[% o.title | html %]</td>
         <td>[% o.author | html %]</td>
@@ -52,7 +52,7 @@
             <a href="/cgi-bin/koha/cataloguing/addbiblio.pl?biblionumber=[% o.biblionumber | html %]&op=">Edit</a>
         </td>
         <td>[% o.department | html %]</td>
-        <td>[% o.deliverydate | html %]</td>
+        <td>[% USE String( order.deliverydate ) %][% String.truncate(10) | html %]</td>
     </tr>
     [% END %]
     </table>
