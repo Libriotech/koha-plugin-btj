@@ -93,10 +93,10 @@
     <td>[% r.articleno | html %]</td>
     <td>[% r.price | html %]</td>
     <td>[% r.currency | html %]</td>
-    <td>[% r.deliverydate | html %]</td>
+    <td>[% USE String( r.deliverydate ) %][% String.truncate(10) | html %]</td>
     <td>[% r.infonote | html %]</td>
     <td>[% r.noofcopies | html %]</td>
-    <td>[% r.orderdate | html %]</td>
+    <td>[% USE String( r.orderdate ) %][% String.truncate(10) | html %]</td>
     <td>[% r.titleno | html %]</td>
     <td>[% r.marcorigin | html %]</td>
     <td>[% r.department | html %]</td>

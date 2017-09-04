@@ -34,7 +34,7 @@ use base qw(Koha::Plugins::Base);
 ## We will also need to include any Koha libraries we want to access
 
 ## Here we set our plugin version
-our $VERSION = '0.0.22';
+our $VERSION = '0.0.23';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
