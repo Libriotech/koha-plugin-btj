@@ -1,4 +1,4 @@
-order[% INCLUDE 'doc-head-open.inc' %]
+[% INCLUDE 'doc-head-open.inc' %]
  <title>Koha: BTJ orders</title>
 [% INCLUDE 'doc-head-close.inc' %]
 </head>
